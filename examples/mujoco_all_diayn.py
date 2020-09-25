@@ -8,9 +8,11 @@ from rllab.misc.instrument import VariantGenerator
 from rllab.envs.normalized_env import normalize
 from rllab import spaces
 
+from examples.variants import SAMPLER_PARAMS
 from sac.algos import DIAYN
 from sac.envs.gym_env import GymEnv
 from sac.misc.instrument import run_sac_experiment
+from sac.misc.sampler import SimpleSampler
 from sac.misc.utils import timestamp
 from sac.policies.gmm import GMMPolicy
 from sac.replay_buffers import SimpleReplayBuffer
@@ -47,7 +49,7 @@ TAG_KEYS = ['seed']
 ENV_PARAMS = {
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
-        'env_name': 'Swimmer-v1',
+        'env_name': 'Swimmer-v2',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },
@@ -194,6 +196,7 @@ def run_experiment(variant):
         eval_render=False,
         eval_n_episodes=1,
         eval_deterministic=True,
+        sampler=SimpleSampler(**SAMPLER_PARAMS)
     )
 
     M = variant['layer_size']

@@ -88,6 +88,16 @@ class GMMPolicy(NNPolicy, Serializable):
 
         return actions
 
+    def get_distribution_for(self, obs_pl: tf.Tensor, reuse: bool) -> GMM:
+        with tf.variable_scope(self.name, reuse=reuse):
+            return GMM(
+                K=self._K,
+                hidden_layers_sizes=self._hidden_layers,
+                Dx=self._Da,
+                cond_t_lst=(obs_pl,),
+                reg=self._reg
+            )
+
     def build(self):
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,

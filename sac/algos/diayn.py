@@ -7,6 +7,7 @@ from rllab.misc.overrides import overrides
 from sac.algos.sac import SAC
 from sac.misc import tf_utils, utils
 from sac.misc.sampler import rollouts
+from sac.policies import UniformPolicy
 from sac.policies.hierarchical_policy import FixedOptionPolicy
 
 from collections import deque
@@ -76,6 +77,7 @@ class DIAYN(SAC):
         self._env = env
         self._policy = policy
         self._discriminator = discriminator
+        self._include_actions = False
         self._qf = qf
         self._vf = vf
         self._pool = pool
@@ -94,7 +96,6 @@ class DIAYN(SAC):
         self._best_skill_n_rollouts = best_skill_n_rollouts
         self._learn_p_z = learn_p_z
         self._save_full_state = save_full_state
-        self._include_actions = include_actions
         self._add_p_z = add_p_z
 
         self._Da = self._env.action_space.flat_dim
@@ -102,11 +103,26 @@ class DIAYN(SAC):
 
         self._training_ops = list()
 
-        self._init_placeholders()
-        self._init_actor_update()
-        self._init_critic_update()
+        super(DIAYN, self).__init__(
+            base_kwargs=base_kwargs,
+            env=env,
+            policy=policy,
+            initial_exploration_policy=UniformPolicy(env.spec),
+            qf1=None,
+            qf2=None,
+            vf=vf,
+            pool=pool,
+            lr=lr,
+            discount=discount,
+            tau=tau,
+            save_full_state=save_full_state,
+        )
+
+        # self._init_placeholders()
+        # self._init_actor_update()
+        # self._init_critic_update()
         self._init_discriminator_update()
-        self._init_target_ops()
+        # self._init_target_ops()
 
 
         self._sess.run(tf.global_variables_initializer())
@@ -231,7 +247,7 @@ class DIAYN(SAC):
 
         log_target_t = self._qf.get_output_for(
             self._obs_pl, tf.tanh(self._policy_dist.x_t), reuse=True)  # N
-        corr = self._squash_correction(self._policy_dist.x_t)
+        corr = self._policy._squash_correction(self._policy_dist.x_t)
         corr = tf.check_numerics(corr, 'Check numerics: corr')
 
         scaled_log_pi = self._scale_entropy * (log_pi_t - corr)
@@ -278,7 +294,7 @@ class DIAYN(SAC):
         self._training_ops.append(discriminator_train_op)
 
 
-    def _get_feed_dict(self, batch):
+    def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
@@ -361,10 +377,10 @@ class DIAYN(SAC):
 
                 self._eval_env.log_diagnostics(paths)
 
-        batch = self._pool.random_batch(self._batch_size)
+        batch = self._pool.random_batch(self.sampler._batch_size)
         self.log_diagnostics(batch)
 
-    def _train(self, env, policy, pool):
+    def _train(self, env, policy, initial_exploration_policy, pool):
         """When training our policy expects an augmented observation."""
         self._init_training(env, policy, pool)
 
@@ -440,9 +456,9 @@ class DIAYN(SAC):
                         aug_obs = aug_next_ob
                     gt.stamp('sample')
 
-                    if self._pool.size >= self._min_pool_size:
+                    if self._pool.size >= self.sampler._min_pool_size:
                         for i in range(self._n_train_repeat):
-                            batch = self._pool.random_batch(self._batch_size)
+                            batch = self._pool.random_batch(self.sampler._batch_size)
                             self._do_training(iteration, batch)
 
                     gt.stamp('train')
@@ -495,7 +511,7 @@ class DIAYN(SAC):
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
-        feed_dict = self._get_feed_dict(batch)
+        feed_dict = self._get_feed_dict(iteration=None, batch=batch)
         log_pairs = [
             ('qf', self._qf_t),
             ('vf', self._vf_t),
@@ -520,7 +536,7 @@ class DIAYN(SAC):
                 logger.record_tabular('%s-std' % name, np.std(val))
         logger.record_tabular('z-entropy', scipy.stats.entropy(self._p_z))
 
-        self._policy.log_diagnostics(batch)
+        self._policy.log_diagnostics(iteration=None, batch=batch)
         if self._plotter:
             self._plotter.draw()
 
@@ -572,3 +588,7 @@ class DIAYN(SAC):
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])
         self._env.__setstate__(d['env'])
+
+    @property
+    def _max_path_length(self):
+        return self.sampler._max_path_length

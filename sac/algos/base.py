@@ -28,7 +28,8 @@ class RLAlgorithm(Algorithm):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render=False,
-            control_interval=1
+            control_interval=1,
+            **kwargs
     ):
         """
         Args:

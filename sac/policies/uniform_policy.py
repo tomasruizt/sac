@@ -1,9 +1,10 @@
 from rllab.core.serializable import Serializable
 
 from rllab.misc.overrides import overrides
-from sandbox.rocky.tf.policies.base import Policy
 
 import numpy as np
+
+from rllab.policies.base import Policy
 
 
 class UniformPolicy(Policy, Serializable):

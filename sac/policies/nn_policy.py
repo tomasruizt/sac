@@ -3,7 +3,8 @@ import tensorflow as tf
 from rllab.core.serializable import Serializable
 
 from rllab.misc.overrides import overrides
-from sandbox.rocky.tf.policies.base import Policy
+
+from rllab.policies.base import Policy
 
 
 class NNPolicy(Policy, Serializable):

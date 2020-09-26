@@ -124,8 +124,8 @@ class GymEnv(Env, Serializable):
         next_obs, reward, done, info = self.env.step(action)
         return Step(next_obs, reward, done, **info)
 
-    def render(self, mode='human', close=False):
-        return self.env._render(mode, close)
+    def render(self, mode='human'):
+        return self.env.render(mode=mode)
         # self.env.render()
 
     def terminate(self):

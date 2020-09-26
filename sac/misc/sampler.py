@@ -4,7 +4,7 @@ import time
 from rllab.misc import logger
 
 
-def rollout(env, policy, path_length, render=False, speedup=None):
+def rollout(env, policy, path_length, render=False, speedup=1, render_mode=None, wait_for_render=True):
     Da = env.action_space.flat_dim
     Do = env.observation_space.flat_dim
 
@@ -15,6 +15,7 @@ def rollout(env, policy, path_length, render=False, speedup=None):
     actions = np.zeros((path_length, Da))
     terminals = np.zeros((path_length, ))
     rewards = np.zeros((path_length, ))
+    imgs = []
     agent_infos = []
     env_infos = []
 
@@ -35,9 +36,11 @@ def rollout(env, policy, path_length, render=False, speedup=None):
         observation = next_obs
 
         if render:
-            env.render()
-            time_step = 0.05
-            time.sleep(time_step / speedup)
+            img = env.render(mode=render_mode)
+            imgs.append(img)
+            if wait_for_render:
+                time_step = 0.05
+                time.sleep(time_step / speedup)
 
         if terminal:
             break
@@ -51,15 +54,15 @@ def rollout(env, policy, path_length, render=False, speedup=None):
         'terminals': terminals[:t + 1],
         'next_observations': observations[1:t + 2],
         'agent_infos': agent_infos,
-        'env_infos': env_infos
+        'env_infos': env_infos,
+        "ims": np.asarray(imgs)
     }
 
     return path
 
-
-def rollouts(env, policy, path_length, n_paths, render=False):
+def rollouts(env, policy, path_length, n_paths, render=False, render_mode=None, wait_for_render=True):
     paths = [
-        rollout(env, policy, path_length, render=render)
+        rollout(env, policy, path_length, render=render, render_mode=render_mode, wait_for_render=wait_for_render)
         for i in range(n_paths)
     ]
 

@@ -40,7 +40,8 @@ if __name__ == "__main__":
                 fixed_z_policy = FixedOptionPolicy(policy, num_skills, z)
                 new_paths = rollouts(env, fixed_z_policy,
                                   args.max_path_length, n_paths=1,
-                                  render=True, render_mode='rgb_array')
+                                  render=True, render_mode='rgb_array', wait_for_render=False)
+                assert "ims" in new_paths[0], new_paths[0].keys()
                 path_list.append(new_paths)
                 total_returns = np.mean([path['rewards'].sum() for path in new_paths])
                 reward_list.append(total_returns)

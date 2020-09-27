@@ -54,6 +54,14 @@ ENV_PARAMS = {
         num_skills=8,
         layer_size=64,
         snapshot_gap=5),
+    "fetchreach": dict(
+        prefix="fetchreach",
+        env_name="NoGoalFetchReach-v0",
+        max_path_length=50,
+        n_epochs=100,
+        num_skills=4,
+        layer_size=128,
+        snapshot_gap=2),
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v3',

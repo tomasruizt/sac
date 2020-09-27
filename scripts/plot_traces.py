@@ -4,6 +4,7 @@ from multiprocessing import Pool
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import argparse
 import numpy as np
@@ -26,7 +27,11 @@ def dump_trace(picklefile: str, args):
         env = data['env']
         num_skills = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
 
-        plt.figure(figsize=(6, 6))
+        if args.three_dims:
+            fig, axs = plt.subplots(1, 2, figsize=(12, 6), subplot_kw=dict(projection="3d"))
+        else:
+            fig, axs = plt.subplots(figsize=(12, 12))
+
         palette = sns.color_palette('hls', num_skills)
         with policy.deterministic(args.deterministic):
             skills = range(num_skills) if args.specific_skill == _use_all_skills else [args.specific_skill]
@@ -53,7 +58,15 @@ def dump_trace(picklefile: str, args):
                     obs_vec = np.array(obs_vec)
                     x = obs_vec[:, args.dim_0]
                     y = obs_vec[:, args.dim_1]
-                    plt.plot(x, y, c=palette[z])
+
+                    plot_kwargs = dict(c=palette[z], alpha=0.6)
+                    if args.three_dims:
+                        h = obs_vec[:, 2]
+                        axs[0].view_init(30, 30)
+                        axs[0].plot(x, y, h, **plot_kwargs)
+                        axs[1].plot(x, y, h, **plot_kwargs)
+                    else:
+                        axs.plot(x, y, **plot_kwargs)
 
                     use_plot_lims = np.isfinite(env.observation_space.bounds).all()
                     if use_plot_lims:
@@ -61,7 +74,8 @@ def dump_trace(picklefile: str, args):
                         plt.xlim(xlim)
                         plt.ylim(ylim)
 
-        plt.savefig(filename)
+        plt.tight_layout()
+        plt.savefig(filename, dpi=160)
         plt.close()
 
 
@@ -73,11 +87,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='Path to the snapshot file.')
-    parser.add_argument('--all-pkl-files', type=bool, default=False)
+    parser.add_argument('--all-pkl-files', dest="all_pkl_files", action="store_true")
     parser.add_argument('--max-path-length', '-l', type=int, default=100)
     parser.add_argument('--n_paths', type=int, default=1)
     parser.add_argument('--dim_0', type=int, default=0)
     parser.add_argument('--dim_1', type=int, default=1)
+    parser.add_argument('--3d', dest="three_dims", action="store_true")
     parser.add_argument('--use_qpos', type=bool, default=False)
     parser.add_argument('--use_action', type=bool, default=False)
     parser.add_argument('--deterministic', '-d', dest='deterministic',
@@ -85,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-deterministic', '-nd', dest='deterministic',
                         action='store_false')
     parser.add_argument('--specific-skill', type=int, default=_use_all_skills)
-    parser.set_defaults(deterministic=True)
+    parser.set_defaults(deterministic=True, three_dim=False, all_pkl_files=False)
 
     args = parser.parse_args()
     if args.all_pkl_files:

@@ -67,6 +67,7 @@ class GymEnv(Env, Serializable):
         Serializable.quick_init(self, locals())
 
         env = gym.envs.make(env_name)
+        max_episode_steps = env._max_episode_steps
 
         # HACK: Gets rid of the TimeLimit wrapper that sets 'done = True' when
         # the time limit specified for each environment has been passed and
@@ -94,7 +95,7 @@ class GymEnv(Env, Serializable):
         logger.log("observation space: {}".format(self._observation_space))
         self._action_space = convert_gym_space(env.action_space)
         logger.log("action space: {}".format(self._action_space))
-        self._horizon = env.spec.tags['wrapper_config.TimeLimit.max_episode_steps']
+        self._horizon = max_episode_steps
         self._log_dir = log_dir
         self._force_reset = force_reset
 

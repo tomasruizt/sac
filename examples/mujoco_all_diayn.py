@@ -47,7 +47,7 @@ TAG_KEYS = ['seed']
 ENV_PARAMS = {
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
-        'env_name': 'Swimmer-v1',
+        'env_name': 'Swimmer-v3',
         'max_path_length': 1000,
         'n_epochs': 10000,
     },

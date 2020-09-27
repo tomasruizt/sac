@@ -37,7 +37,7 @@ SHARED_PARAMS = {
     'snapshot_mode': 'gap',
     'snapshot_gap': 10,
     'sync_pkl': True,
-    'num_skills': 50,
+    'num_skills': 6,
     'scale_entropy': 0.1,
     'include_actions': False,
     'learn_p_z': False,
@@ -50,7 +50,7 @@ ENV_PARAMS = {
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v2',
-        'max_path_length': 1000,
+        'max_path_length': 200,
         'n_epochs': 10000,
     },
     'hopper': { # 3 DoF

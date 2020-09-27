@@ -67,5 +67,5 @@ class NNDiscriminatorFunction(MLPFunction):
         self._name = 'discriminator'
         self._input_pls = (self._obs_pl, self._action_pl)
         self._layer_sizes = list(hidden_layer_sizes) + [num_skills]
-        self._output_nonlinearity = tf.nn.softmax
+        self._output_nonlinearity = None
         self._output_t = self.get_output_for(*self._input_pls)

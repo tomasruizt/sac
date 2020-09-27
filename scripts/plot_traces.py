@@ -68,11 +68,21 @@ def dump_trace(picklefile: str, args):
                     else:
                         axs.plot(x, y, **plot_kwargs)
 
-                    use_plot_lims = np.isfinite(env.observation_space.bounds).all()
+                    use_plot_lims = np.isfinite(env.observation_space.bounds)[:, :3].all()
                     if use_plot_lims:
-                        xlim, ylim = np.asarray(env.observation_space.bounds).T
-                        plt.xlim(xlim)
-                        plt.ylim(ylim)
+                        bounds = np.asarray(env.observation_space.bounds).T
+                        xlim, ylim = bounds[:2]
+
+                        if args.three_dims:
+                            zlim = bounds[2]
+                            for ax in axs:
+                                ax.set_xlim(xlim)
+                                ax.set_ylim(ylim)
+                                ax.set_zlim(zlim)
+                        else:
+                            plt.xlim(xlim)
+                            plt.ylim(ylim)
+
 
         plt.tight_layout()
         plt.savefig(filename, dpi=160)

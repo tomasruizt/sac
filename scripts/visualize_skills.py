@@ -6,10 +6,11 @@ import os
 from sac.misc import utils
 from sac.policies.hierarchical_policy import FixedOptionPolicy
 from sac.misc.sampler import rollouts
+import sac.envs  # For gym registration
 
 
 if __name__ == "__main__":
-
+    record_best_and_worst_skills = False
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='Path to the snapshot file.')
     parser.add_argument('--max-path-length', '-l', type=int, default=100)
@@ -39,8 +40,9 @@ if __name__ == "__main__":
             for z in range(num_skills):
                 fixed_z_policy = FixedOptionPolicy(policy, num_skills, z)
                 new_paths = rollouts(env, fixed_z_policy,
-                                  args.max_path_length, n_paths=1,
-                                  render=True, render_mode='rgb_array')
+                                     args.max_path_length, n_paths=1,
+                                     render=True, render_mode='rgb_array')
+                assert "ims" in new_paths[0], new_paths[0].keys()
                 path_list.append(new_paths)
                 total_returns = np.mean([path['rewards'].sum() for path in new_paths])
                 reward_list.append(total_returns)
@@ -58,11 +60,12 @@ if __name__ == "__main__":
         print('Best reward: %d' % np.max(reward_list))
         print('Worst reward: %d' % np.min(reward_list))
         # Record extra long videos for best and worst skills:
-        best_z = np.argmax(reward_list)
-        worst_z = np.argmin(reward_list)
-        for (z, filename) in [(best_z, best_filename), (worst_z, worst_filename)]:
-            fixed_z_policy = FixedOptionPolicy(policy, num_skills, z)
-            new_paths = rollouts(env, fixed_z_policy,
-                                 3 * args.max_path_length, n_paths=1,
-                                 render=True, render_mode='rgb_array')
-            utils._save_video(new_paths, filename)
+        if record_best_and_worst_skills:
+            best_z = np.argmax(reward_list)
+            worst_z = np.argmin(reward_list)
+            for (z, filename) in [(best_z, best_filename), (worst_z, worst_filename)]:
+                fixed_z_policy = FixedOptionPolicy(policy, num_skills, z)
+                new_paths = rollouts(env, fixed_z_policy,
+                                     3 * args.max_path_length, n_paths=1,
+                                     render=True, render_mode='rgb_array')
+                utils._save_video(new_paths, filename)

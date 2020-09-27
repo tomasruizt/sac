@@ -49,10 +49,11 @@ ENV_PARAMS = {
     "point2d": dict(
         prefix="point2d",
         env_name="Point2D-v0",
-        max_path_length=50,
+        max_path_length=75,
         n_epochs=100,
-        num_skills=4,
-        layer_size=64),
+        num_skills=8,
+        layer_size=64,
+        snapshot_gap=5),
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v3',

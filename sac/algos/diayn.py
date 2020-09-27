@@ -457,7 +457,7 @@ class DIAYN(SAC):
                     self._p_z = utils._softmax(log_p_z)
 
 
-                self._evaluate(epoch)
+                #self._evaluate(epoch)
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)

@@ -8,13 +8,12 @@ from rllab.misc.instrument import VariantGenerator
 from rllab.envs.normalized_env import normalize
 from rllab import spaces
 
-from examples.variants import SAMPLER_PARAMS
 from sac.algos import DIAYN
 from sac.envs.gym_env import GymEnv
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.sampler import SimpleSampler
 from sac.misc.utils import timestamp
-from sac.policies.gmm import GMMPolicy
+from sac.policies.gaussian_policy import GaussianPolicy
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction, NNDiscriminatorFunction
 
@@ -42,6 +41,7 @@ SHARED_PARAMS = {
     'include_actions': False,
     'learn_p_z': False,
     'add_p_z': True,
+    'reparametrize': True
 }
 
 TAG_KEYS = ['seed']
@@ -92,6 +92,8 @@ ENV_PARAMS = {
         'n_epochs': 50,
         'scale_reward': 1,
     },
+    "point2d": dict(prefix="point2d", env_name="Point2D-v0", layer_size=32,
+                    max_path_length=50, n_epochs=100, num_skills=4, snapshot_gap=2),
     'inverted-pendulum': {
         'prefix': 'inverted-pendulum',
         'env_name': 'InvertedPendulum-v1',
@@ -172,6 +174,9 @@ def run_experiment(variant):
     elif variant['env_name'] == 'swimmer-rllab':
         from rllab.envs.mujoco.swimmer_env import SwimmerEnv
         env = normalize(SwimmerEnv())
+    elif variant["env_name"] == "Point2D-v0":
+        import sac.envs.point2d_env
+        env = GymEnv(variant["env_name"])
     else:
         env = normalize(GymEnv(variant['env_name']))
 
@@ -196,7 +201,9 @@ def run_experiment(variant):
         eval_render=False,
         eval_n_episodes=1,
         eval_deterministic=True,
-        sampler=SimpleSampler(**SAMPLER_PARAMS)
+        sampler=SimpleSampler(max_path_length=variant["max_path_length"],
+                              min_pool_size=variant["max_path_length"],
+                              batch_size=variant["batch_size"])
     )
 
     M = variant['layer_size']
@@ -210,13 +217,19 @@ def run_experiment(variant):
         hidden_layer_sizes=[M, M],
     )
 
-    policy = GMMPolicy(
+    policy = GaussianPolicy(
         env_spec=aug_env_spec,
-        K=variant['K'],
         hidden_layer_sizes=[M, M],
-        qf=qf,
         reg=0.001,
     )
+
+    # policy = GMMPolicy(
+    #     env_spec=aug_env_spec,
+    #     K=variant['K'],
+    #     hidden_layer_sizes=[M, M],
+    #     qf=qf,
+    #     reg=0.001,
+    # )
 
     discriminator = NNDiscriminatorFunction(
         env_spec=env.spec,
@@ -242,6 +255,7 @@ def run_experiment(variant):
         include_actions=variant['include_actions'],
         learn_p_z=variant['learn_p_z'],
         add_p_z=variant['add_p_z'],
+        reparametrize=variant["reparametrize"]
     )
 
     algorithm.train()

@@ -14,6 +14,7 @@ from sac.misc import tf_utils
 
 EPS = 1e-6
 
+
 class GaussianPolicy(NNPolicy, Serializable):
     def __init__(self, env_spec, hidden_layer_sizes=(100, 100), reg=1e-3,
                  squash=True, reparameterize=True, name='gaussian_policy'):
@@ -75,14 +76,24 @@ class GaussianPolicy(NNPolicy, Serializable):
             return actions, log_pis
 
         return actions
+
+    def get_distribution_for(self, obs_pl: tf.Tensor, reuse=tf.AUTO_REUSE) -> Normal:
+        with tf.variable_scope(self.name, reuse=reuse):
+            return Normal(
+                hidden_layers_sizes=self._hidden_layers,
+                Dx=self._Da,
+                reparameterize=self._reparameterize,
+                cond_t_lst=[obs_pl],
+                reg=self._reg
+            )
     
     def log_pis_for(self, actions):
         if self._squash:
            raw_actions = tf.atanh(actions) 
-           log_pis = self._distribution.log_prob(raw_actions)
+           log_pis = self.distribution.log_prob(raw_actions)
            log_pis -= self._squash_correction(raw_actions)
            return log_pis
-        return self._distribution.log_prob(raw_actions)
+        return self.distribution.log_prob(raw_actions)
 
     def build(self):
         self._observations_ph = tf.placeholder(

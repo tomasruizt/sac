@@ -42,7 +42,8 @@ class DIAYN(SAC):
                  best_skill_n_rollouts=10,
                  learn_p_z=False,
                  include_actions=False,
-                 add_p_z=True):
+                 add_p_z=True,
+                 reparametrize=False):
         """
         Args:
             base_kwargs (dict): dictionary of base arguments that are directly
@@ -116,6 +117,7 @@ class DIAYN(SAC):
             discount=discount,
             tau=tau,
             save_full_state=save_full_state,
+            reparameterize=reparametrize
         )
 
         # self._init_placeholders()
@@ -473,7 +475,7 @@ class DIAYN(SAC):
                     self._p_z = utils._softmax(log_p_z)
 
 
-                self._evaluate(epoch)
+                # self._evaluate(epoch)
 
                 params = self.get_snapshot(epoch)
                 logger.save_itr_params(epoch, params)

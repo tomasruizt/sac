@@ -10,6 +10,7 @@ from rllab import spaces
 
 from sac.algos import DIAYN
 from sac.envs.gym_env import GymEnv
+import sac.envs # For gym registration
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp
 from sac.policies.gmm import GMMPolicy
@@ -45,6 +46,13 @@ SHARED_PARAMS = {
 TAG_KEYS = ['seed']
 
 ENV_PARAMS = {
+    "point2d": dict(
+        prefix="point2d",
+        env_name="Point2D-v0",
+        max_path_length=50,
+        n_epochs=100,
+        num_skills=4,
+        layer_size=64),
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v3',

@@ -58,10 +58,10 @@ ENV_PARAMS = {
         prefix="fetchreach",
         env_name="NoGoalFetchReach-v0",
         max_path_length=50,
-        n_epochs=100,
-        num_skills=4,
+        n_epochs=1000,
+        num_skills=6,
         layer_size=128,
-        snapshot_gap=2),
+        snapshot_gap=10),
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v3',

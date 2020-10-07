@@ -2,8 +2,10 @@ import argparse
 
 import joblib
 import tensorflow as tf
+from itertools import count
 
 from rllab.sampler.utils import rollout
+from sac.policies.hierarchical_policy import FixedOptionPolicy
 
 if __name__ == "__main__":
 
@@ -28,8 +30,12 @@ if __name__ == "__main__":
             policy = data['policy']
             env = data['env']
 
+        num_skills = data['policy'].observation_space.flat_dim - data['env'].spec.observation_space.flat_dim
+
         with policy.deterministic(args.deterministic):
-            while True:
-                path = rollout(env, policy,
+            for t in count():
+                skill = t % num_skills
+                fixed_policy = FixedOptionPolicy(base_policy=policy, num_skills=num_skills, z=skill)
+                path = rollout(env, fixed_policy,
                                max_path_length=args.max_path_length,
                                animated=True, speedup=args.speedup)

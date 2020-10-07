@@ -36,6 +36,7 @@ if __name__ == "__main__":
             for t in count():
                 skill = t % num_skills
                 fixed_policy = FixedOptionPolicy(base_policy=policy, num_skills=num_skills, z=skill)
+                print("Using skill number: %d" % skill)
                 path = rollout(env, fixed_policy,
                                max_path_length=args.max_path_length,
                                animated=True, speedup=args.speedup)

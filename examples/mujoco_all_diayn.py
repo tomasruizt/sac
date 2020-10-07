@@ -45,6 +45,14 @@ SHARED_PARAMS = {
 
 TAG_KEYS = ['seed']
 
+FETCH_ENV_SHARED_PARAMS = dict(
+    max_path_length=50,
+    n_epochs=500,
+    num_skills=6,
+    layer_size=128,
+    snapshot_gap=5
+)
+
 ENV_PARAMS = {
     "point2d": dict(
         prefix="point2d",
@@ -55,13 +63,15 @@ ENV_PARAMS = {
         layer_size=64,
         snapshot_gap=5),
     "fetchreach": dict(
+        **FETCH_ENV_SHARED_PARAMS,
         prefix="fetchreach",
-        env_name="NoGoalFetchReach-v0",
-        max_path_length=50,
-        n_epochs=1000,
-        num_skills=6,
-        layer_size=128,
-        snapshot_gap=10),
+        env_name="NoGoalFetchReach-v0"
+    ),
+    "fetchpickandplace": dict(
+        **FETCH_ENV_SHARED_PARAMS,
+        prefix="fetchpickandplace",
+        env_name="NoGoalFetchPickAndPlace-v0",
+    ),
     'swimmer': { # 2 DoF
         'prefix': 'swimmer',
         'env_name': 'Swimmer-v3',

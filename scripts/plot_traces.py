@@ -60,13 +60,18 @@ def dump_trace(picklefile: str, args):
                     y = obs_vec[:, args.dim_1]
 
                     plot_kwargs = dict(c=palette[z], alpha=0.6)
+                    if path_index == 0:
+                        plot_kwargs["label"] = "skill %d" % z
+
                     if args.three_dims:
-                        h = obs_vec[:, 2]
+                        h = obs_vec[:, args.dim_2]
                         axs[0].view_init(30, 30)
                         axs[0].plot(x, y, h, **plot_kwargs)
                         axs[1].plot(x, y, h, **plot_kwargs)
+                        axs[0].legend()
                     else:
                         axs.plot(x, y, **plot_kwargs)
+                        axs.legend()
 
                     use_plot_lims = np.isfinite(env.observation_space.bounds)[:, :3].all()
                     if use_plot_lims:
@@ -83,7 +88,6 @@ def dump_trace(picklefile: str, args):
                             plt.xlim(xlim)
                             plt.ylim(ylim)
 
-
         plt.tight_layout()
         plt.savefig(filename, dpi=160)
         plt.close()
@@ -92,6 +96,7 @@ def dump_trace(picklefile: str, args):
 def tuplify(params):
     p1, p2 = params
     dump_trace(p1, p2)
+
 
 if __name__ == "__main__":
 
@@ -102,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_paths', type=int, default=1)
     parser.add_argument('--dim_0', type=int, default=0)
     parser.add_argument('--dim_1', type=int, default=1)
+    parser.add_argument('--dim_2', type=int, default=2)
     parser.add_argument('--3d', dest="three_dims", action="store_true")
     parser.add_argument('--use_qpos', type=bool, default=False)
     parser.add_argument('--use_action', type=bool, default=False)

@@ -12,3 +12,4 @@ gym
 *.TXT
 *.pkl
 .ipynb_checkpoints/
+diayn-results.csv

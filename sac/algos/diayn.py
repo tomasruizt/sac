@@ -3,6 +3,7 @@
 from rllab.core.serializable import Serializable
 from rllab.misc import logger
 from rllab.misc.overrides import overrides
+from runstats import Statistics
 
 from sac.algos.sac import SAC
 from sac.misc import tf_utils, utils
@@ -389,6 +390,8 @@ class DIAYN(SAC):
                                       save_itrs=True):
                 logger.push_prefix('Epoch #%d | ' % epoch)
 
+                epoch_pseudorewards = Statistics()
+                epoch_discriminator_losses = Statistics()
 
                 path_length_list = []
                 z = self._sample_z()
@@ -443,6 +446,7 @@ class DIAYN(SAC):
                     if self._pool.size >= self._min_pool_size:
                         for i in range(self._n_train_repeat):
                             batch = self._pool.random_batch(self._batch_size)
+                            self._update_epoch_statistics(batch, epoch_discriminator_losses, epoch_pseudorewards)
                             self._do_training(iteration, batch)
 
                     gt.stamp('train')
@@ -471,10 +475,15 @@ class DIAYN(SAC):
                 logger.record_tabular('time-total', total_time)
                 logger.record_tabular('epoch', epoch)
                 logger.record_tabular('episodes', n_episodes)
-                logger.record_tabular('max-path-return', max_path_return)
-                logger.record_tabular('last-path-return', last_path_return)
+                #logger.record_tabular('max-path-return', max_path_return)
+                #logger.record_tabular('last-path-return', last_path_return)
                 logger.record_tabular('pool-size', self._pool.size)
-                logger.record_tabular('path-length', np.mean(path_length_list))
+                #logger.record_tabular('path-length', np.mean(path_length_list))
+                logger.record_tabular('pseudoreward mean', epoch_pseudorewards.mean())
+                logger.record_tabular('pseudoreward variance', epoch_pseudorewards.variance())
+                logger.record_tabular('discrimnator-loss-mean', epoch_discriminator_losses.mean())
+                logger.record_tabular('discrimnator-loss-variance', epoch_discriminator_losses.variance())
+                self._dump_statistics(n_episodes, epoch_pseudorewards, epoch_discriminator_losses)
 
                 logger.dump_tabular(with_prefix=False)
                 logger.pop_prefix()
@@ -572,3 +581,25 @@ class DIAYN(SAC):
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])
         self._env.__setstate__(d['env'])
+
+    def _update_epoch_statistics(self, batch, discriminator_losses: Statistics, pseudorewards: Statistics):
+        feed_dict = self._get_feed_dict(batch)
+        loss, prewards = self._sess.run([self._discriminator_loss, self._reward_pl], feed_dict)
+        discriminator_losses.push(loss)
+        for r in prewards:
+            pseudorewards.push(r)
+
+    @staticmethod
+    def _dump_statistics(n_episodes: int, epoch_pseudorewards: Statistics, epoch_discriminator_losses: Statistics):
+        filename = "diayn-results.csv"
+        if not os.path.exists(filename):
+            with open(filename, "w") as file:
+                file.write("EPISODE;PSEUDOREWARD_AVG;PSEUDOREWARD_VAR;DISCR_LOSS_AVG;DISCR_LOSS_VAR\n")
+
+        with open(filename, "a") as file:
+            stats = (n_episodes,
+                     epoch_pseudorewards.mean(),
+                     epoch_pseudorewards.variance(),
+                     epoch_discriminator_losses.mean(),
+                     epoch_discriminator_losses.variance())
+            file.write("%d;%f;%f;%f;%f\n" % stats)

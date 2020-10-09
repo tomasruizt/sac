@@ -1,11 +1,18 @@
+from functools import partial
 from typing import Union
 
 import gym
 import time
 
 import numpy as np
-from gym.envs.robotics import FetchReachEnv, FetchPickAndPlaceEnv
+from gym.envs.robotics import FetchReachEnv, FetchPickAndPlaceEnv, HandBlockEnv
 from gym.wrappers import TimeLimit, FilterObservation, FlattenObservation
+
+
+def make_nogoal_handblock_env():
+    filter_obs = partial(FilterObservation, filter_keys=["observation", "achieved_goal"])
+    set_timelimit = partial(TimeLimit, max_episode_steps=1000)
+    return set_timelimit(FlattenObservation(filter_obs(env=HandBlockEnv())))
 
 
 def wrap_fetch_env(fetch_env: Union[FetchReachEnv, FetchPickAndPlaceEnv]):
@@ -27,7 +34,7 @@ def make_nogoal_fetchpickandplace_env():
 
 
 if __name__ == '__main__':
-    env = make_nogoal_fetchpickandplace_env()
+    env = make_nogoal_handblock_env()
     assert isinstance(env.reset(), np.ndarray)
     while True:
         env.step(env.action_space.sample())

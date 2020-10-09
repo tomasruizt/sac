@@ -589,9 +589,8 @@ class DIAYN(SAC):
         for r in prewards:
             pseudorewards.push(r)
 
-    @staticmethod
-    def _dump_statistics(n_episodes: int, epoch_pseudorewards: Statistics, epoch_discriminator_losses: Statistics):
-        filename = "diayn-results.csv"
+    def _dump_statistics(self, n_episodes: int, epoch_pseudorewards: Statistics, epoch_discriminator_losses: Statistics):
+        filename = "diayn-results-%s-%dskills.csv" % (self.env.wrapped_env.env_id, self._num_skills)
         if not os.path.exists(filename):
             with open(filename, "w") as file:
                 file.write("EPISODE;PSEUDOREWARD_AVG;PSEUDOREWARD_VAR;DISCR_LOSS_AVG;DISCR_LOSS_VAR\n")

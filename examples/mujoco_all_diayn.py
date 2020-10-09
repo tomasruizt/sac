@@ -54,6 +54,15 @@ FETCH_ENV_SHARED_PARAMS = dict(
 )
 
 ENV_PARAMS = {
+    "hand": dict(
+        prefix="hand",
+        env_name="NoGoalHandBlock-v0",
+        max_path_length=100,
+        n_epochs=100,
+        num_skills=6,
+        layer_size=256,
+        snapshot_gap=25
+    ),
     "point2d": dict(
         prefix="point2d",
         env_name="Point2D-v0",

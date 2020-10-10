@@ -6,7 +6,7 @@ from gym.wrappers import TimeLimit
 
 
 def make_point2d_env():
-    return TimeLimit(env=Point2DEnv())
+    return TimeLimit(env=Point2DEnv(), max_episode_steps=50)
 
 
 class Point2DEnv(gym.Env):

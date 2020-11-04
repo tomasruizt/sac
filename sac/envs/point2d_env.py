@@ -35,7 +35,7 @@ class Point2DEnv(gym.Env):
 
     @staticmethod
     def compute_reward(achieved_goal, desired_goal, info):
-        return -np.linalg.norm(np.subtract(achieved_goal, desired_goal))
+        return -np.linalg.norm(np.subtract(achieved_goal, desired_goal), axis=achieved_goal.ndim - 1)
 
     @staticmethod
     def achieved_goal_from_state(state):

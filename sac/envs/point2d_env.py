@@ -11,24 +11,39 @@ def make_point2d_env():
 
 class Point2DEnv(gym.Env):
     _INITIAL_POSITION = np.asarray([0, 0])
+    metadata = {"render.modes": ["rgb_array"]}
 
     def __init__(self):
         self.observation_space = gym.spaces.Box(-1, 1, shape=(2,))
         self.action_space = gym.spaces.Box(-1, 1, shape=(2,))
         self._cur_pos = self._INITIAL_POSITION
         self._plot = None
+        self.goal = self._new_goal()
+
+    @staticmethod
+    def _new_goal():
+        return np.random.uniform(-1, 1, size=(2,))
 
     def step(self, action):
         action = np.asarray(action)
         assert action.shape == (2,) and np.abs(action*0.99).max() <= 1, action
         self._cur_pos = np.clip(a=self._cur_pos + 0.1*action, a_min=-1, a_max=1)
-        reward = 0
+        reward = self.compute_reward(self._cur_pos, self.goal, info=None)
         done = False
         info = dict()
         return self._cur_pos.copy(), reward, done, info
 
+    @staticmethod
+    def compute_reward(achieved_goal, desired_goal, info):
+        return -np.linalg.norm(np.subtract(achieved_goal, desired_goal))
+
+    @staticmethod
+    def achieved_goal_from_state(state):
+        return state
+
     def reset(self):
         self._cur_pos = self._INITIAL_POSITION
+        self.goal = self._new_goal()
         return self._cur_pos.copy()
 
     def render(self, mode='human'):
@@ -38,9 +53,11 @@ class Point2DEnv(gym.Env):
             corners = [(-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)]
             ax.plot(*zip(*corners))
             path_collection = ax.scatter(*self._cur_pos, c="red")
-            self._plot = fig, path_collection
-        fig, path_collection = self._plot
+            goal_path_coll = ax.scatter(*self.goal, c="green")
+            self._plot = fig, path_collection, goal_path_coll
+        fig, path_collection, goal_path_coll = self._plot
         path_collection.set_offsets(self._cur_pos)
+        goal_path_coll.set_offsets(self.goal)
         fig.canvas.draw()
 
         if mode == "rgb_array":
@@ -51,6 +68,7 @@ class Point2DEnv(gym.Env):
     def seed(self, seed=None):
         self.observation_space.seed(seed)
         self.action_space.seed(seed)
+        np.random.seed(seed)
 
 
 if __name__ == '__main__':
@@ -64,10 +82,12 @@ if __name__ == '__main__':
         fig.canvas.draw()
         fig.canvas.flush_events()
     while True:
-        env.step(env.action_space.sample())
-        time.sleep(0.1)
-        img = env.render() if not use_imgs else env.render("rgb_array")
-        if use_imgs:
-            obj.set_data(img)
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+        env.reset()
+        for _ in range(30):
+            print(env.step(env.action_space.sample())[1])
+            time.sleep(0.1)
+            img = env.render() if not use_imgs else env.render("rgb_array")
+            if use_imgs:
+                obj.set_data(img)
+                fig.canvas.draw()
+                fig.canvas.flush_events()
